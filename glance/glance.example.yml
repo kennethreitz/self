@@ -1,0 +1,92 @@
+# Glance dashboard config. Secrets come from env vars (${VAR}) set on the container.
+# auth.secret-key must be exactly 64 bytes, base64: openssl rand -base64 64 | tr -d '\n'
+auth:
+  secret-key: ${GLANCE_SECRET_KEY}
+  users:
+    ${GLANCE_USER}:
+      password: ${GLANCE_PASSWORD}
+
+pages:
+  - name: Home
+    columns:
+      - size: small
+        widgets:
+          - type: clock
+            hour-format: 12h
+          - type: weather
+            location: ${WEATHER_LOCATION}
+            units: imperial
+          - type: server-stats
+            servers:
+              - type: local
+                name: server
+                mountpoints:
+                  "/host/root":
+                    name: root disk
+
+      - size: full
+        widgets:
+          - type: monitor
+            cache: 1m
+            title: Services
+            sites:
+              # url = where the tile links; check-url = what is health-probed
+              - title: example.com
+                url: https://example.com/
+                check-url: https://example.com/health
+              - title: dokploy
+                url: https://dokploy.example.com
+          - type: rss
+            title: Blog
+            limit: 6
+            feeds:
+              - url: https://example.com/feed.xml
+
+      - size: small
+        widgets:
+          - type: bookmarks
+            groups:
+              - title: Admin
+                links:
+                  - title: Dokploy
+                    url: https://dokploy.example.com
+          - type: hacker-news
+            limit: 8
+
+  - name: Server
+    columns:
+      - size: full
+        widgets:
+          - type: docker-containers   # needs the docker socket (prefer a socket proxy)
+            title: Containers
+      - size: small
+        widgets:
+          - type: custom-api
+            title: Dokploy Apps
+            cache: 1m
+            url: https://dokploy.example.com/api/project.all
+            headers:
+              x-api-key: ${DOKPLOY_API_KEY}   # use a scoped/read-only key
+            template: |
+              <ul class="list list-gap-10 list-with-separator">
+              {{ range .JSON.Array "" }}{{ range .Array "environments" }}
+                {{ range .Array "applications" }}
+                <li class="flex items-center justify-between gap-10">
+                  <span class="size-h4 color-highlight">{{ .String "name" }}</span>
+                  {{ $s := .String "applicationStatus" }}
+                  <span class="{{ if eq $s "done" }}color-positive{{ else if eq $s "error" }}color-negative{{ else }}color-paused{{ end }}">{{ $s }}</span>
+                </li>{{ end }}
+                {{ range .Array "compose" }}
+                <li class="flex items-center justify-between gap-10">
+                  <span class="size-h4 color-highlight">{{ .String "name" }}</span>
+                  {{ $s := .String "composeStatus" }}
+                  <span class="{{ if eq $s "done" }}color-positive{{ else if eq $s "error" }}color-negative{{ else }}color-paused{{ end }}">{{ $s }}</span>
+                </li>{{ end }}
+              {{ end }}{{ end }}
+              </ul>
+          - type: releases
+            title: Stack releases
+            repositories:
+              - dokploy/dokploy
+              - traefik/traefik
+              - glanceapp/glance

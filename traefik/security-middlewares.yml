@@ -1,0 +1,16 @@
+# Traefik dynamic config (e.g. /etc/dokploy/traefik/dynamic/security.yml).
+# Attach with label: traefik.http.routers.<router>.middlewares=secure-headers@file,rate-limit@file
+http:
+  middlewares:
+    secure-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: strict-origin-when-cross-origin
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+    rate-limit:
+      rateLimit:
+        average: 20
+        burst: 50

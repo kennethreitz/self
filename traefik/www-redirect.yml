@@ -1,0 +1,24 @@
+# Custom (not Dokploy-managed) 301 www.example.com -> example.com.
+# High priority so it wins over Dokploy's auto-routers; survives app redeploys.
+http:
+  middlewares:
+    www-redirect:
+      redirectRegex:
+        regex: "^https?://www\\.example\\.com/(.*)"
+        replacement: "https://example.com/${1}"
+        permanent: true
+  routers:
+    www-redirect-web:
+      rule: "Host(`www.example.com`)"
+      priority: 1000
+      entryPoints: [web]
+      middlewares: [www-redirect]
+      service: noop@internal
+    www-redirect-websecure:
+      rule: "Host(`www.example.com`)"
+      priority: 1000
+      entryPoints: [websecure]
+      middlewares: [www-redirect]
+      service: noop@internal
+      tls:
+        certResolver: letsencrypt

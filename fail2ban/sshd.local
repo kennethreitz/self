@@ -1,0 +1,12 @@
+# /etc/fail2ban/jail.d/sshd.local
+[DEFAULT]
+# Add your own static IP(s) so you can't ban yourself.
+ignoreip = 127.0.0.1/8 ::1 ${ADMIN_IP}
+
+[sshd]
+enabled  = true
+backend  = systemd
+port     = ssh
+bantime  = 1h
+findtime = 10m
+maxretry = 5
